@@ -1,0 +1,26 @@
+# tdgov runtime data (state, work directories, local ledger, trusted immudb state)
+.tdgov/
+results/*.csv
+/tdgov.yaml
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+blueprint/terraform.tfvars
+*.auto.tfvars
+
+# Python
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.venv/
+dist/
+build/
+
+# Secrets
+.env
+*.pem

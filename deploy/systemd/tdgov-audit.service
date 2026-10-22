@@ -1,0 +1,17 @@
+[Unit]
+Description=tdgov compliance audit of the approved infrastructure baseline
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=tdgov
+WorkingDirectory=/opt/tdgov
+EnvironmentFile=/etc/tdgov/env
+ExecStart=/usr/local/bin/tdgov audit
+# Exit code 2 means deviations were found and reported; not a unit failure.
+SuccessExitStatus=2
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/opt/tdgov/.tdgov
+PrivateTmp=true

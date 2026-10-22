@@ -1,0 +1,79 @@
+# Drift-injection scenarios (see experiments/README.md).
+# Each scenario makes one out-of-band change through the Proxmox API,
+# bypassing the pipeline, waits for the next scheduled audit, records whether
+# and when it was detected, and reverts the change.
+#
+# expected: drift      -> a resource_drift / planned_change on `target_address`
+#           unmanaged  -> an unmanaged VM finding
+#           none       -> nothing should be reported (control / known blind spot)
+#
+# Targets are VM names created by the blueprint (tdgov-app1, tdgov-db, ...).
+
+scenarios:
+  - id: C0-control
+    description: No injection; measures false positives.
+    kind: control
+    expected: none
+
+  - id: S1-memory-resize
+    description: Application server memory increased in the Proxmox UI.
+    kind: config
+    target: tdgov-app1
+    target_address: proxmox_virtual_environment_vm.app["app1"]
+    params: {memory: 3072}
+    expected: drift
+
+  - id: S2-cpu-change
+    description: CPU cores changed on an application server.
+    kind: config
+    target: tdgov-app2
+    target_address: proxmox_virtual_environment_vm.app["app2"]
+    params: {cores: 4}
+    expected: drift
+
+  - id: S3-tag-removed
+    description: Ownership tag removed from the load balancer.
+    kind: config
+    target: tdgov-lb
+    target_address: proxmox_virtual_environment_vm.lb
+    params: {tags: "role-lb"}
+    expected: drift
+
+  - id: S4-db-exposed
+    description: Database NIC moved from the private to the public bridge (security-critical).
+    kind: nic
+    target: tdgov-db
+    target_address: proxmox_virtual_environment_vm.db
+    params: {nic: net0, bridge: vmbr0}
+    expected: drift
+
+  - id: S5-firewall-disabled
+    description: Firewall disabled on the load balancer NIC.
+    kind: nic
+    target: tdgov-lb
+    target_address: proxmox_virtual_environment_vm.lb
+    params: {nic: net0, firewall: "0"}
+    expected: drift
+
+  - id: S6-extra-disk
+    description: Additional disk attached to the database VM.
+    kind: add_disk
+    target: tdgov-db
+    target_address: proxmox_virtual_environment_vm.db
+    params: {slot: scsi1, datastore: zfs-encrypted, size_gb: 1}
+    expected: drift
+
+  - id: S7-unmanaged-vm
+    description: VM created inside the blueprint's ID range outside Terraform.
+    kind: unmanaged_vm
+    params: {vmid: 9150, name: shadow-vm, tags: "blueprint-reference-web-stack"}
+    expected: unmanaged
+
+  - id: S8-guest-config-change
+    description: PostgreSQL port changed inside the guest OS (outside Terraform's state model).
+    kind: guest_exec
+    target: tdgov-db
+    params:
+      apply: ["/bin/sh", "-c", "sed -i.tdgov 's/^port = .*/port = 5432/' /etc/postgresql/16/main/postgresql.conf"]
+      revert: ["/bin/sh", "-c", "mv /etc/postgresql/16/main/postgresql.conf.tdgov /etc/postgresql/16/main/postgresql.conf"]
+    expected: none   # known blind spot; reported as "not detected" by design

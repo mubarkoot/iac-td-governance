@@ -1,0 +1,53 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install OPA and conftest
+        run: |
+          curl -sSfL -o /usr/local/bin/opa https://github.com/open-policy-agent/opa/releases/download/v1.4.2/opa_linux_amd64_static
+          chmod +x /usr/local/bin/opa
+          curl -sSfL https://github.com/open-policy-agent/conftest/releases/download/v0.58.0/conftest_0.58.0_Linux_x86_64.tar.gz | tar xz -C /usr/local/bin conftest
+      - run: pip install -e ".[dev]"
+      - run: ruff check tdgov experiments tests
+      - run: pytest -q
+
+  policies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install OPA
+        run: |
+          curl -sSfL -o /usr/local/bin/opa https://github.com/open-policy-agent/opa/releases/download/v1.4.2/opa_linux_amd64_static
+          chmod +x /usr/local/bin/opa
+      - run: opa fmt --list --fail policies
+      - run: opa test policies -v
+
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.14.7
+      - working-directory: blueprint
+        run: |
+          terraform fmt -check -recursive
+          terraform init -backend=false -input=false
+          terraform validate

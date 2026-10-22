@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tdgov"
+version = "1.0.0"
+description = "Compliance-by-design governance of Infrastructure as Code to mitigate infrastructure-related technical debt"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+  {name = "Mohammed Mubarkoot", email = "mubarkoot@snu.ac.kr"},
+  {name = "Wahiba Mellaoui"},
+  {name = "Jörn Altmann"},
+  {name = "Bernhard Egger"},
+]
+dependencies = [
+  "PyYAML>=6.0",
+  "requests>=2.31",
+]
+
+[project.optional-dependencies]
+immudb = ["immudb-py>=1.5"]
+dev = ["pytest>=8", "ruff>=0.5"]
+
+[project.scripts]
+tdgov = "tdgov.cli:main"
+
+[tool.setuptools]
+packages = ["tdgov"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 130
+target-version = "py310"

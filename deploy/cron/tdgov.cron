@@ -1,0 +1,13 @@
+# /etc/cron.d/tdgov - scheduled audits and reports (Steps 4-5).
+# Detection latency is bounded by the audit interval; adjust to the
+# criticality of the system. Environment (credentials) is read from
+# /etc/tdgov/env, which must be readable by the tdgov user only.
+
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+
+# Audit every 15 minutes.
+*/15 * * * *  tdgov  set -a; . /etc/tdgov/env; set +a; cd /opt/tdgov && tdgov audit >> /var/log/tdgov/audit.log 2>&1
+
+# Weekly stakeholder report, Monday 07:00 (trigger iii in the paper).
+0 7 * * 1     tdgov  set -a; . /etc/tdgov/env; set +a; cd /opt/tdgov && tdgov report --days 7 --notify >> /var/log/tdgov/report.log 2>&1

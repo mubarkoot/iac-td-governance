@@ -1,0 +1,19 @@
+# Local immudb instance for the Blueprint Repository (Step 3).
+# Change the default admin password immediately (immuadmin user changepassword immudb)
+# and create a dedicated user/database for tdgov in production.
+services:
+  immudb:
+    image: codenotary/immudb:1.10.0
+    container_name: tdgov-immudb
+    ports:
+      - "3322:3322"   # gRPC (used by tdgov)
+      - "8080:8080"   # web console
+    volumes:
+      - immudb-data:/var/lib/immudb
+    environment:
+      IMMUDB_ADDRESS: 0.0.0.0
+      IMMUDB_AUTH: "true"
+    restart: unless-stopped
+
+volumes:
+  immudb-data:

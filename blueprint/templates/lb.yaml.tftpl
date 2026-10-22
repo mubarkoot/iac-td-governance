@@ -1,0 +1,37 @@
+#cloud-config
+hostname: lb
+users:
+  - name: ops
+    groups: [sudo]
+    shell: /bin/bash
+    sudo: "ALL=(ALL) NOPASSWD:ALL"
+    ssh_authorized_keys:
+      - ${ssh_key}
+ssh_pwauth: false
+package_update: true
+packages:
+  - qemu-guest-agent
+  - haproxy
+write_files:
+  - path: /etc/haproxy/haproxy.cfg
+    content: |
+      global
+        log /dev/log local0
+        maxconn 2048
+      defaults
+        mode http
+        timeout connect 5s
+        timeout client 30s
+        timeout server 30s
+      frontend http_in
+        bind *:80
+        default_backend app_servers
+      backend app_servers
+        balance roundrobin
+        option httpchk GET /
+%{ for i, ip in backends ~}
+        server app${i + 1} ${ip}:80 check
+%{ endfor ~}
+runcmd:
+  - systemctl enable --now qemu-guest-agent
+  - systemctl restart haproxy

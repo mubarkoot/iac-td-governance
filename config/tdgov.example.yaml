@@ -1,0 +1,64 @@
+# tdgov configuration. Copy to ./tdgov.yaml and adjust.
+# Secrets are NEVER stored here: they come from environment variables or Vault.
+
+blueprint_name: reference-web-stack
+blueprint_dir: blueprint
+policy_dir: policies
+policy_data_dir: policies/data
+tfvars_file: blueprint/terraform.tfvars      # site settings, no secrets
+
+# Shared Terraform state used by deploy and audit (partial backend config).
+backend_config:
+  path: .tdgov/state/terraform.tfstate
+
+work_dir: .tdgov/work
+terraform_bin: terraform                       # or "tofu" for OpenTofu
+conftest_bin: conftest
+
+# Blueprint Repository (Step 3). Use "immudb" in production; "file" is a
+# hash-chained local ledger for evaluation and CI.
+ledger:
+  backend: immudb
+  host: 127.0.0.1
+  port: 3322
+  database: defaultdb
+  user_env: IMMUDB_USER
+  password_env: IMMUDB_PASSWORD
+  state_dir: .tdgov/immudb-state               # persisted trusted state for proof verification
+
+# Change approval (Step 6, DR2).
+approval:
+  quorum: 2
+  required_roles: [compliance, infrastructure]
+  allow_self_approval: false
+
+approvers:
+  - {id: alice, role: compliance, email: alice@example.org}
+  - {id: bob, role: infrastructure, email: bob@example.org}
+  - {id: carol, role: software-architecture, email: carol@example.org}
+
+# Reporting (Step 5).
+notify:
+  channels: [stdout, webhook]                  # stdout | webhook | email
+  webhook_url_env: TDGOV_WEBHOOK_URL
+  # smtp_host: smtp.example.org
+  # email_from: tdgov@example.org
+  # email_to: [infra-governance@example.org]
+
+# Deployment-time secret injection (design rule 2).
+secrets:
+  provider: env                                # env | vault
+  mapping:
+    db_admin_password: TDGOV_DB_ADMIN_PASSWORD
+  # provider: vault
+  # mapping:
+  #   db_admin_password: secret/data/tdgov/reference-web-stack#db_admin_password
+
+# Unmanaged-resource scan (extends detection beyond Terraform state).
+proxmox:
+  endpoint_env: PROXMOX_VE_ENDPOINT
+  token_env: PROXMOX_VE_API_TOKEN
+  verify_tls: true
+  ignore_tag: tdgov-ignore
+scan_unmanaged: true
+unmanaged_vmid_range: [9100, 9199]             # VM IDs reserved for this blueprint

@@ -1,0 +1,34 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the article below."
+title: "tdgov: compliance-by-design governance for Infrastructure as Code"
+version: 1.0.0
+license: MIT
+authors:
+  - family-names: Mubarkoot
+    given-names: Mohammed
+    email: mubarkoot@snu.ac.kr
+    orcid: "https://orcid.org/0000-0001-9265-4375"
+    affiliation: Seoul National University
+  - family-names: Mellaoui
+    given-names: Wahiba
+    affiliation: Seoul National University
+  - family-names: Altmann
+    given-names: Jörn
+    affiliation: Seoul National University
+  - family-names: Egger
+    given-names: Bernhard
+    affiliation: Seoul National University
+preferred-citation:
+  type: article
+  title: "Toward Sustainable Software Engineering: A Framework for Resilient Infrastructure Delivery and Technical Debt Prevention"
+  authors:
+    - family-names: Mubarkoot
+      given-names: Mohammed
+    - family-names: Mellaoui
+      given-names: Wahiba
+    - family-names: Altmann
+      given-names: Jörn
+    - family-names: Egger
+      given-names: Bernhard
+  status: submitted
+  year: 2026

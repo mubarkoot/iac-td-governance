@@ -1,0 +1,7 @@
+# Site-specific policy data. Adjust to your Proxmox storage configuration.
+tdgov:
+  encrypted_datastores:
+    - zfs-encrypted
+  allowed_postgres_versions:
+    - "16"
+    - "17"

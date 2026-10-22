@@ -1,0 +1,8 @@
+# Copy to terraform.tfvars and adjust. Do NOT put secrets here:
+# db_admin_password is injected by `tdgov deploy` from the secrets manager.
+
+proxmox_node           = "pve01"
+encrypted_datastore_id = "zfs-encrypted"
+admin_ssh_public_key   = "ssh-ed25519 AAAA... ops@example"
+
+# proxmox_insecure_tls = true   # lab only

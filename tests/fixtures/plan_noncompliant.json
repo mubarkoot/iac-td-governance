@@ -1,0 +1,37 @@
+{
+  "format_version": "1.2",
+  "terraform_version": "1.14.7",
+  "variables": {
+    "private_bridge": {"value": "vmbr1"},
+    "db_port": {"value": 5432},
+    "postgres_version": {"value": "12"}
+  },
+  "planned_values": {
+    "root_module": {
+      "resources": [
+        {
+          "address": "proxmox_virtual_environment_vm.db",
+          "type": "proxmox_virtual_environment_vm",
+          "name": "db",
+          "values": {
+            "tags": ["managed-by-terraform", "role-db"],
+            "disk": [{"datastore_id": "local-lvm"}],
+            "initialization": [{"datastore_id": "zfs-encrypted"}],
+            "network_device": [{"bridge": "vmbr0", "firewall": true}]
+          }
+        }
+      ]
+    }
+  },
+  "configuration": {
+    "provider_config": {
+      "proxmox": {"name": "proxmox", "version_constraint": "~> 0.116"}
+    },
+    "root_module": {
+      "variables": {
+        "db_admin_password": {"sensitive": true, "default": "changeme"}
+      },
+      "resources": []
+    }
+  }
+}

@@ -1,0 +1,37 @@
+#cloud-config
+# The administrator password is injected at deployment time by `tdgov deploy`
+# from the secrets manager; it is never part of the approved blueprint.
+hostname: db
+users:
+  - name: ops
+    groups: [sudo]
+    shell: /bin/bash
+    sudo: "ALL=(ALL) NOPASSWD:ALL"
+    ssh_authorized_keys:
+      - ${ssh_key}
+ssh_pwauth: false
+package_update: true
+packages:
+  - qemu-guest-agent
+  - curl
+  - ca-certificates
+  - gnupg
+write_files:
+  - path: /root/tdgov-db-secret
+    permissions: "0600"
+    content: "${db_password}"
+runcmd:
+  - systemctl enable --now qemu-guest-agent
+  - install -d /usr/share/postgresql-common/pgdg
+  - curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+  - echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt noble-pgdg main" > /etc/apt/sources.list.d/pgdg.list
+  - apt-get update
+  - DEBIAN_FRONTEND=noninteractive apt-get install -y postgresql-${postgres_version}
+  - sed -i "s/^#\?port = .*/port = ${db_port}/" /etc/postgresql/${postgres_version}/main/postgresql.conf
+  - sed -i "s/^#\?listen_addresses = .*/listen_addresses = '*'/" /etc/postgresql/${postgres_version}/main/postgresql.conf
+%{ for cidr in app_cidrs ~}
+  - echo "host all all ${split("/", cidr)[0]}/32 scram-sha-256" >>/etc/postgresql/${postgres_version}/main/pg_hba.conf
+%{ endfor ~}
+  - systemctl restart postgresql
+  - su - postgres -c "psql -p ${db_port} -c \"ALTER USER postgres PASSWORD '$(cat /root/tdgov-db-secret)';\""
+  - shred -u /root/tdgov-db-secret
